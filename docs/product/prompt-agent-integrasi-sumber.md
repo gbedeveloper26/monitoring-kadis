@@ -4,7 +4,7 @@ Gunakan prompt ini pada **satu repository aplikasi sumber per sesi**. Ganti bagi
 
 ## Mengapa API dan query sama-sama diperlukan
 
-Query dipakai **di backend aplikasi sumber** untuk menghitung status dan angka agregat yang benar. Hasilnya dikirim lewat **HTTP API/webhook** ke Monitoring Kadis. Monitoring Kadis tidak membaca MySQL aplikasi sumber secara langsung. Perubahan data menjadi mendekati real-time hanya jika ada trigger setelah transaksi commit, pengiriman berkala, atau mekanisme sinkronisasi lain yang jelas. WebSocket hanya mengirim perubahan dari backend Monitoring Kadis ke dashboard.
+Query dipakai **di backend aplikasi sumber** untuk menghitung status dan angka agregat yang benar. Hasilnya diambil lewat **HTTP API/webhook** oleh/dari Monitoring Kadis. Untuk aplikasi yang menyediakan API, Monitoring Kadis tidak membaca database aplikasi sumber secara langsung. Pengecualian yang diklarifikasi pengguna adalah aplikasi eKTP tanpa API: backend Monitoring Kadis boleh membaca Oracle eKTP melalui view agregat read-only yang disetujui DBA. Jangan memperluas pengecualian ini ke database aplikasi API. Perubahan data menjadi mendekati real-time hanya jika ada trigger setelah transaksi commit, pengiriman berkala, atau mekanisme sinkronisasi lain yang jelas. WebSocket hanya mengirim perubahan dari backend Monitoring Kadis ke dashboard.
 
 Untuk MVP, **snapshot agregat** per indikator adalah usulan awal: setiap pesan membawa nilai terkini, periode, dan waktu perhitungan. Ini memudahkan koreksi dan rekonsiliasi. Event delta hanya dipilih bila aturan transaksi, pembatalan, deduplikasi, dan urutan sudah didefinisikan. Snapshot tidak boleh dijumlahkan sebagai delta.
 
@@ -28,7 +28,7 @@ Untuk indikator App Mobile, pekerjaan integrasi data diarahkan ke **backend Lara
 Anda adalah agent yang bekerja di repository [REPO] milik Dukcapil untuk aplikasi [NAMA_APLIKASI] ([STACK]). Tujuan integrasi: mengirim status aplikasi dan indikator [INDIKATOR] ke backend Node.js Monitoring Kadis secara aman dan andal. TV Monitoring Kadis dapat dilihat publik; credential, PII, dan detail transaksi tidak boleh terkirim untuk ditayangkan. Jangan menyalin angka contoh dari gambar rancangan.
 
 Konteks tetap:
-- Monitoring Kadis memakai Next.js, Node.js, Oracle, WebSocket ke frontend, dan Docker.
+- Monitoring Kadis memakai Next.js, Node.js, PostgreSQL sebagai database monitoring, dan WebSocket ke frontend. PostgreSQL direncanakan dipasang langsung pada Windows Server untuk tahap awal; source tetap mengirim agregat lewat API/webhook.
 - Aplikasi sumber mengirim melalui HTTP API/webhook ke backend Monitoring Kadis; aplikasi sumber tidak perlu WebSocket.
 - Inventory Aset: Laravel + MySQL. Antrian Offline: CodeIgniter 4 + MySQL. Mitra PKS: Laravel + MySQL. App Mobile: React Native + backend Laravel, memakai MySQL yang sama dengan Mitra PKS.
 - Dua domain lain, Monitoring Server dan Monitoring Blangko, masih DEMO pada fase awal dan ditangani simulator terpisah.
@@ -50,7 +50,7 @@ FASE 2 — IMPLEMENTASI DI REPOSITORY SUMBER (hanya setelah [GATE] terpenuhi):
 3. Kirim snapshot nilai terkini dengan ID event stabil, waktu, periode, dan revision/as_of; terapkan semantik snapshot, bukan penambahan delta. Jika kontrak menyetujui delta, jelaskan dan uji aturan berbeda itu.
 4. Tambahkan pemeriksaan status/heartbeat hanya bila disepakati. Jangan menampilkan detail error, path internal, credential, atau data sensitif pada layar publik.
 5. Uji query terhadap golden dataset dari owner, event setelah commit, retry dengan ID sama, kegagalan jaringan, koreksi data, batas periode/zona waktu, serta tidak adanya PII/secret di payload dan log. Untuk shared DB, uji tidak terjadi double-count.
-6. Tunjukkan diff, perintah dan hasil test nyata, contoh payload fiktif berlabel SAMPLE, cara mengonfigurasi secret tanpa memasukkannya ke Git, rollback, dan langkah integrasi staging. Jangan klaim berhasil terhubung ke Oracle/TV bila backend penerima belum tersedia.
+6. Tunjukkan diff, perintah dan hasil test nyata, contoh payload fiktif berlabel SAMPLE, cara mengonfigurasi secret tanpa memasukkannya ke Git, rollback, dan langkah integrasi staging. Jangan klaim berhasil terhubung ke PostgreSQL/TV bila backend penerima belum tersedia.
 
 BATASAN: satu repository sumber per task; perubahan minimal; jangan ubah production atau sistem lain; jangan membuat endpoint/payload final dari asumsi yang belum disetujui. Jika data/owner/kontrak tidak tersedia, selesaikan audit dan serahkan pertanyaan blocking.
 ```

@@ -41,7 +41,7 @@ Contoh bentuk respons **SAMPLE, bukan data nyata**:
 
 `SiponcanMonitoringObserver` mengantrekan job setelah commit ketika Mitra dibuat, dihapus, atau `is_active` berubah. `SendSiponcanSnapshot` menghitung ulang jumlah akun aktif saat job berjalan dan mengirim `POST` HTTPS ke `MONITORING_KADIS_INGEST_URL`. Source `mitra_pks`, type `mitra.active.snapshot_updated`, `schema_version=1.0`, `mode=REAL`. Header `X-Monitoring-Key-Id`, `X-Monitoring-Timestamp`, `X-Monitoring-Signature` memakai HMAC-SHA256 dari `timestamp + "." + raw JSON body`. Event ID tetap sama saat retry; receiver wajib memverifikasi tanda tangan, usia timestamp, schema, source, dan idempotensi. Job memakai database queue, HTTP timeout 5 detik, 5 percobaan dengan backoff.
 
-Pengiriman **nonaktif secara default** (`MONITORING_KADIS_ENABLED=false`) dan belum bisa berfungsi ujung-ke-ujung karena penerima Node.js Monitoring Kadis belum tersedia. Setelah diaktifkan, jalankan worker database queue; diperlukan konfigurasi HTTPS URL, key ID, secret, serta rekonsiliasi berkala untuk mengatasi celah antara commit dan enqueue / job gagal permanen.
+Pengiriman **nonaktif secara default** (`MONITORING_KADIS_ENABLED=false`). Receiver Node.js Monitoring Kadis tersedia di dev dengan HMAC, deduplikasi event, dan penyimpanan PostgreSQL, tetapi belum dikonfigurasi atau diuji ujung-ke-ujung. Setelah diaktifkan, jalankan worker database queue; diperlukan konfigurasi HTTPS URL, key ID, secret, serta rekonsiliasi berkala untuk mengatasi celah antara commit dan enqueue / job gagal permanen.
 
 Contoh payload **SAMPLE**:
 
@@ -72,4 +72,4 @@ File sumber: `SiponcanSnapshot.php`, `MonitoringSiponcanController.php`, `Siponc
 
 ## Verifikasi dan keputusan tertunda
 
-Test `MonitoringSiponcanTest` lulus (4 test, 15 assertion) dengan SQLite in-memory dan HTTP fake. Tidak ada koneksi ke database production atau penerima Monitoring Kadis. Definisi bisnis “Mitra Aktif”, hubungan dengan `FEATURE_MITRA`, batas stale/status portal, serta persetujuan publikasi belum final. PRD tetap `PENDING`; jangan aktifkan pengiriman atau deploy ke production sebelum kontrak dan keamanan disetujui.
+Test `MonitoringSiponcanTest` lulus (4 test, 15 assertion) dengan SQLite in-memory dan HTTP fake. Tidak ada koneksi ke database production atau uji pengiriman end-to-end ke Monitoring Kadis. Definisi bisnis “Mitra Aktif”, hubungan dengan `FEATURE_MITRA`, batas stale/status portal, serta persetujuan publikasi belum final. PRD tetap `PENDING`; jangan aktifkan pengiriman atau deploy ke production sebelum kontrak dan keamanan disetujui.

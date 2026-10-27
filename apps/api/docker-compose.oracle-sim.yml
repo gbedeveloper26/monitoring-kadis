@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: kadis-postgres-sim
+    environment:
+      POSTGRES_DB: monitoring_kadis
+      POSTGRES_USER: monitoring_kadis_app
+      POSTGRES_PASSWORD: ${PG_SIM_PASSWORD:?Set PG_SIM_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - kadis-postgres-sim-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U monitoring_kadis_app -d monitoring_kadis"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+  oracle:
+    image: container-registry.oracle.com/database/free:latest-lite
+    container_name: kadis-oracle-sim
+    environment:
+      ORACLE_PWD: ${ORACLE_ADMIN_PASSWORD:?Set ORACLE_ADMIN_PASSWORD in .env}
+    ports:
+      - "127.0.0.1:1521:1521"
+    volumes:
+      - kadis-oracle-sim-data:/opt/oracle/oradata
+      - ./scripts/oracle-healthcheck.sh:/usr/local/bin/oracle-healthcheck.sh:ro
+    shm_size: 1g
+    healthcheck:
+      test: ["CMD", "bash", "/usr/local/bin/oracle-healthcheck.sh"]
+      interval: 15s
+      timeout: 30s
+      retries: 60
+      start_period: 10m
+
+volumes:
+  kadis-postgres-sim-data:
+  kadis-oracle-sim-data:

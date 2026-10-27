@@ -47,6 +47,6 @@ Route baru ada di `app/Config/Routes.php`. Endpoint `/health` existing memeriksa
 
 ## Batasan dan verifikasi
 
-Belum ada webhook, queue pengiriman, atau penerima Node.js Monitoring Kadis. Endpoint ini baru dapat dipoll oleh backend nanti dengan interval yang disetujui; jangan menyebutnya real-time push. Belum ada uji terhadap database operasional atau test respons HTTP end-to-end; `php -l` lulus pada controller, `git diff --check` bersih, dan `php spark routes` mengonfirmasi route GET terdaftar. PHP lokal memberi peringatan ekstensi Oracle tidak terpasang; query sumber memakai database aplikasi antrean, bukan Oracle.
+Antrian PTSP belum memiliki webhook atau queue pengiriman. API ringkasan dapat dipoll oleh backend Monitoring Kadis setiap 30 detik; receiver dev kini juga tersedia, tetapi kontrak event antrean belum disepakati. Polling bukan real-time push. Belum ada uji terhadap database operasional atau test respons HTTP end-to-end; `php -l` lulus pada controller, `git diff --check` bersih, dan `php spark routes` mengonfirmasi route GET terdaftar. PHP lokal memberi peringatan ekstensi Oracle tidak terpasang; query sumber memakai database aplikasi antrean, bukan Oracle.
 
 Antrian umum didokumentasikan terpisah di [antrian-umum.md](antrian-umum.md). **Status kedua aplikasi diputuskan terpisah; baseline MVP juga menampilkan angka harian PTSP dan Umum pada dua kartu terpisah.** Nilainya tidak dijumlahkan. Lihat [baseline MVP](../product/mvp-baseline.md); bentuk visual dan kelayakan publik masih perlu review.

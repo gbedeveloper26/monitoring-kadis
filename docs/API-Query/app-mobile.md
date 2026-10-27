@@ -44,7 +44,7 @@ Contoh bentuk respons **SAMPLE, bukan data nyata**:
 
 `SiponcanMonitoringObserver` mengantrekan job setelah commit ketika akun `register` dengan `role=warga` dibuat/dihapus atau ketika `role` berubah ke/dari warga. Perubahan status akun tidak memicu snapshot karena semua status ikut dihitung. `SendSiponcanSnapshot` menghitung ulang jumlah saat job berjalan dan mengirim `POST` HTTPS ke `MONITORING_KADIS_INGEST_URL`. Source `app_mobile`, type `mobile.users.snapshot_updated`, `schema_version=1.0`, `mode=REAL`. Event ID tetap saat retry. Header HMAC-SHA256 `X-Monitoring-Key-Id`, `X-Monitoring-Timestamp`, `X-Monitoring-Signature` menandatangani `timestamp + "." + raw JSON body`. Receiver perlu memverifikasi signature, usia timestamp, schema, source, dan idempotensi.
 
-Job memakai database queue, HTTP timeout 5 detik, 5 percobaan dengan backoff. Pengiriman **nonaktif secara default** (`MONITORING_KADIS_ENABLED=false`); backend penerima Monitoring Kadis belum tersedia. Setelah diaktifkan diperlukan worker database queue, konfigurasi secret/HTTPS, dan rekonsiliasi berkala untuk job gagal permanen/celah pasca-commit.
+Job memakai database queue, HTTP timeout 5 detik, 5 percobaan dengan backoff. Pengiriman **nonaktif secara default** (`MONITORING_KADIS_ENABLED=false`); receiver dev Monitoring Kadis tersedia dengan HMAC dan PostgreSQL, tetapi belum dikonfigurasi atau diuji end-to-end. Setelah diaktifkan diperlukan worker database queue, konfigurasi secret/HTTPS, dan rekonsiliasi berkala untuk job gagal permanen/celah pasca-commit.
 
 Contoh payload **SAMPLE**:
 
@@ -65,4 +65,4 @@ Konfigurasi yang dibutuhkan sama seperti [mitra-pks.md](mitra-pks.md). File sumb
 
 ## Verifikasi dan keputusan tertunda
 
-Test `MonitoringSiponcanTest` lulus (4 test, 15 assertion) dengan SQLite in-memory dan HTTP fake. Tidak ada koneksi ke database production atau penerima Monitoring Kadis. Owner harus menetapkan apakah KPI berarti terdaftar/aktif/login periode tertentu, memeriksa schema `register.role` di lingkungan target, dan memutuskan status kesehatan API versus klien mobile. PRD tetap `PENDING`; jangan aktifkan pengiriman atau deploy ke production sebelum kontrak dan keamanan disetujui.
+Test `MonitoringSiponcanTest` lulus (4 test, 15 assertion) dengan SQLite in-memory dan HTTP fake. Tidak ada koneksi ke database production atau uji pengiriman end-to-end ke Monitoring Kadis. Owner harus menetapkan apakah KPI berarti terdaftar/aktif/login periode tertentu, memeriksa schema `register.role` di lingkungan target, dan memutuskan status kesehatan API versus klien mobile. PRD tetap `PENDING`; jangan aktifkan pengiriman atau deploy ke production sebelum kontrak dan keamanan disetujui.

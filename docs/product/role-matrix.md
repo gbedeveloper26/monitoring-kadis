@@ -1,6 +1,6 @@
 # Monitoring Kadis — Role Matrix Draft
 
-Status: Role bernama **Kadis, admin, petugas** telah dikonfirmasi pengguna untuk rancangan; batas izin di bawah adalah baseline least-privilege, belum keputusan akses production atau metode login.
+Status: Role bernama **Kadis, admin, petugas** telah dikonfirmasi pengguna. Baseline permission least-privilege di bawah kini diterapkan pada API backend; izin production, konfigurasi deployment, dan login UI masih perlu review.
 
 Kepala Dinas Dukcapil dan jajarannya adalah pemilik kebutuhan. Semua orang, termasuk pengunjung, boleh **melihat layar TV publik** yang menampilkan status sistem/aplikasi dan angka agregat/grafik yang disetujui. Ini tidak berarti publik boleh mengakses URL dashboard atau API dari perangkat sendiri. `TBC` berarti izin belum diputuskan; implementasi tidak boleh menganggapnya sebagai `allow`. Tidak ada role auditor yang diminta untuk MVP.
 
@@ -22,7 +22,18 @@ Kepala Dinas Dukcapil dan jajarannya adalah pemilik kebutuhan. Semua orang, term
 | Replay event / mengubah data sumber | Tidak pada MVP | Tidak pada MVP | Tidak pada MVP | Tidak |
 | Mengakses credential, PII, atau transaksi individu | Tidak | Tidak | Tidak | Tidak |
 
-Kadis adalah pembaca/pemilik keputusan, admin mengelola konfigurasi Monitoring Kadis, dan petugas memantau operasional sumber yang ditugaskan. Semua izin internal selain melihat dashboard adalah **usulan**, bukan fitur yang sudah diimplementasikan. Dashboard TV dan API dev saat ini belum memiliki login/RBAC; jangan paparkan ke jaringan publik. Identitas pengguna, metode login, penugasan petugas, izin ekspor, audit, dan akses production masih perlu disahkan. QA/dev hanya memakai dev/staging dan bukan role bisnis.
+## Implementasi API backend
+
+| Role | Hak pada backend |
+|---|---|
+| Kadis | Login; melihat data dashboard dan histori agregat. Tidak mendapat akses default ke audit log, user management, atau diagnostik teknis. |
+| Admin monitoring | Semua akses Kadis; mengelola akun/role, melihat audit dan metadata event, serta memeriksa diagnostik seluruh sumber. |
+| Petugas | Login; memeriksa status teknis yang telah ditugaskan kepadanya. Penugasan disimpan pada akun dan admin dapat memperbaruinya. |
+| TV/pemirsa publik | Membaca dashboard agregat dan histori read-only tanpa sesi; deployment wajib membatasi endpoint ke jaringan/perangkat TV yang disetujui. |
+
+Login memakai cookie sesi `HttpOnly`, masa berlaku 8 jam, password hash scrypt, dan sesi yang tokennya disimpan sebagai hash di PostgreSQL. Admin pertama dibuat sekali melalui bootstrap CLI. Tindakan pembuatan/perubahan/reset user dicatat dalam audit log. API login belum memiliki halaman login frontend; endpoint dan RBAC tersedia di backend.
+
+Kadis adalah pembaca/pemilik keputusan, admin mengelola akun Monitoring Kadis dan diagnostik, dan petugas memantau operasional sumber yang ditugaskan. Login dan kontrol role backend sudah dibuat untuk baseline ini; izin ekspor dan autentikasi perangkat TV belum tersedia. Dashboard publik dan API dev jangan dipaparkan ke jaringan publik umum. Identitas pengguna production, penugasan formal, dan akses production tetap perlu disahkan. QA/dev hanya memakai dev/staging dan bukan role bisnis.
 
 ## Mode layar TV
 

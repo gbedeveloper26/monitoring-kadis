@@ -14,7 +14,7 @@ privacy_review_status: PENDING
 architecture_adr_status: PENDING
 uat_status: NOT_STARTED
 production_release_approval: NOT_GRANTED
-notes: "Pengguna telah menjawab role bernama, read-only, target p95 webhook 5 detik, privasi, dan jendela riwayat 1 hari. Detail izin, validasi KPI/filter, arsip-ekspor/backup, kapasitas, Oracle, Docker, dan webhook end-to-end belum disahkan/diimplementasikan; PRD tetap pending."
+notes: "Pengguna telah menjawab role bernama, read-only, target p95 webhook 5 detik, privasi, jendela riwayat 1 hari, serta memilih PostgreSQL untuk Monitoring Kadis dan instalasi langsung pada Windows Server untuk tahap awal. Detail izin, validasi KPI/filter, arsip-ekspor/backup, kapasitas, koneksi production, dan webhook end-to-end belum disahkan/diimplementasikan; PRD tetap pending."
 ```
 
 ## Hal yang harus dinilai pemilik produk
@@ -22,7 +22,7 @@ notes: "Pengguna telah menjawab role bernama, read-only, target p95 webhook 5 de
 1. Definisi dan sumber bukti status serta KPI/grafik publik untuk enam domain awal; Antrian Umum dan PTSP adalah dua aplikasi yang berbeda. Bedakan kesehatan layanan dari kesegaran data.
 2. Delegasi keputusan, role internal, dan mekanisme akses perangkat TV serta API.
 3. Kemampuan health check/webhook empat aplikasi existing dan penanggung jawab teknisnya.
-4. Kelayakan setiap KPI/status untuk publik, retensi metadata, SLA, kapasitas, Oracle/infrastruktur, serta penandaan DEMO.
+4. Kelayakan setiap KPI/status untuk publik, retensi metadata, SLA, kapasitas, PostgreSQL/infrastruktur, serta penandaan DEMO.
 5. Perangkat/sesi TV dan tampilan saat koneksi terputus; kebutuhan dashboard internal bila ada.
 6. Verifikasi rumus, satuan, periode, sumber, owner, kelayakan publik, dan dataset uji untuk tujuh entri baseline; grafik hanya dari histori nyata bila tersedia. Peta serta aktivitas rinci masih di luar MVP.
 7. Target p95 ≤5 detik sejak webhook valid diterima memerlukan receiver dan pengukuran; polling 30 detik saat ini tidak memenuhi target tersebut. Putuskan retensi arsip harian, ekspor, backup/restore, serta sizing dari beban nyata.
@@ -42,5 +42,6 @@ notes: "Pengguna telah menjawab role bernama, read-only, target p95 webhook 5 de
 | Permintaan agen menetapkan jawaban baseline MVP; bukan approval PRD | Pengguna (arahan), agen (usulan detail), identitas penandatangan TBC | 23 Oktober 2026 | 1.3 | Tujuh entri dengan dua angka/status antrean terpisah, lima query nyata, dua placeholder DEMO, target uji dan aturan privasi sementara; validasi/infra belum selesai | `docs/product/mvp-baseline.md`, `docs/product/open-questions.md` |
 | Prototipe dev Monitoring Kadis; bukan approval PRD | Agen, belum ada sign-off bisnis | 23 Oktober 2026 | 1.4 | Node.js polling + WebSocket, snapshot memori, Next.js layar TV; test/build lokal; koneksi sumber nyata dan Oracle belum diuji | `README.md`, `apps/api`, `apps/web` |
 | Jawaban kebutuhan lanjutan; bukan approval PRD | Pengguna (percakapan, identitas penandatangan TBC) | 23 Oktober 2026 | 1.5 | Role Kadis/admin/petugas; TV read-only; target fase webhook p95 ≤5 detik; tim sendiri pemilik sumber; angka/status/grafik tanpa credential; jendela riwayat 1 hari dan arsip laporan/ekspor; kapasitas belum diketahui | Jawaban pengguna dalam percakapan; `docs/product/open-questions.md` |
+| Pilihan DB dan deployment awal; bukan approval PRD | Pengguna (percakapan, identitas penandatangan TBC) | 27 Oktober 2026 | 1.5 | PostgreSQL untuk database Monitoring Kadis; instalasi langsung pada Windows Server untuk tahap awal. API sumber tetap dipolling; Oracle instansi hanya menjadi sumber langsung jika tidak ada API dan DBA menyediakan akses view agregat read-only. | Jawaban pengguna dalam percakapan |
 
 Approval harus diisi oleh manusia berwenang, termasuk nama, tanggal, versi, ruang lingkup, dan daftar perubahan. Agen tidak memberikan persetujuan PRD/UAT atas nama manusia.

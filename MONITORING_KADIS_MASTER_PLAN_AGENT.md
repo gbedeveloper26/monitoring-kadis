@@ -6,6 +6,8 @@
 
 ---
 
+> **Pembaruan keputusan pengguna, 27 Oktober 2026:** PostgreSQL dipilih sebagai database Monitoring Kadis dan akan dipasang langsung pada Windows Server untuk tahap awal. Keputusan ini menggantikan referensi Oracle sebagai DB Kadis dan Docker sebagai keharusan di bawah ini. Produk aplikasi sumber direncanakan ikut di-deploy pada server tersebut dan tetap memakai database masing-masing. Backend Kadis memakai API untuk aplikasi yang menyediakannya; aplikasi eKTP yang tidak menyediakan API akan dibaca langsung melalui Oracle menggunakan view agregat read-only yang disetujui DBA. Integrasi PostgreSQL Kadis tetap terpisah dari database sumber. KPI, view/kolom, dan frekuensi sinkronisasi eKTP masih belum ditentukan.
+
 ## 0. Konteks Discovery yang Sudah Diketahui (ringkasan tahap 1)
 
 ### Masalah dan sasaran
@@ -21,13 +23,13 @@ Aplikasi operasional berjalan pada sistem terpisah sehingga pimpinan/Kadis memer
 | App Mobile | React Native | Laravel + web admin | **MySQL yang sama dengan Mitra PKS** | Existing; sumber data bisnis berbeda, tetapi DB bersama |
 | Monitoring Server | Belum dipilih | Belum dipilih | Belum dipilih | **Dummy/mock** di tahap awal |
 | Monitoring Blangko | Belum dipilih | Belum dipilih | Belum dipilih | **Dummy/mock** di tahap awal |
-| **Monitoring Kadis** | **Next.js** | **Node.js** | **Oracle Database** | **Aplikasi baru**, dikemas dan dijalankan dengan **Docker** |
+| **Monitoring Kadis** | **Next.js** | **Node.js** | **PostgreSQL** | **Aplikasi baru**; tahap awal dipasang langsung di Windows Server, Docker dapat menjadi opsi lanjutan |
 
-**Keputusan integrasi yang sudah dibahas:** aplikasi sumber **tidak perlu memasang WebSocket**. Mereka mengirim perubahan melalui **HTTP API/webhook** ke backend Node.js Monitoring Kadis. Backend memvalidasi, memproses, dan menyimpan data monitoring ke Oracle, kemudian menyiarkan pembaruan ke frontend Next.js melalui **WebSocket**. Untuk pengguna yang baru membuka dashboard: ambil snapshot awal dari REST API, lalu lanjutkan dengan event WebSocket. WebSocket **tidak** otomatis membuat sumber data real-time; aplikasi sumber perlu benar-benar mengirim event, atau perlu strategi sinkronisasi fallback.
+**Keputusan integrasi yang sudah dibahas:** aplikasi sumber **tidak perlu memasang WebSocket**. Backend Node.js mem-poll HTTP API sumber yang tersedia dan dapat menerima webhook setelah kontraknya disepakati. Untuk sumber tanpa API, akses Oracle langsung hanya melalui view agregat read-only yang disediakan/diizinkan DBA. Backend menyimpan data monitoring ke PostgreSQL Kadis, kemudian menyiarkan pembaruan ke frontend Next.js melalui **WebSocket**. Untuk pengguna yang baru membuka dashboard: ambil snapshot awal dari REST API, lalu lanjutkan dengan event WebSocket. WebSocket **tidak** otomatis membuat sumber data real-time; aplikasi sumber perlu benar-benar mengirim event, atau perlu strategi sinkronisasi fallback.
 
 ### Keputusan final vs opsi yang belum disetujui
-- **Sudah ditetapkan:** Next.js frontend; Node.js backend; Oracle database; WebSocket untuk real-time dashboard; Docker; integrasi HTTP API/webhook dari sumber; dua sumber dummy pada fase awal.
-- **Rekomendasi teknis, butuh approval:** TypeScript di frontend dan backend; Fastify atau NestJS untuk HTTP backend; Socket.IO **atau** native WebSocket (`ws`); ORM/query builder atau driver `oracledb`; Redis untuk scaling/queue apabila dibutuhkan; UI library (mis. Tailwind CSS + shadcn/ui); chart library; testing stack; orchestrator/deployment target; CI/CD provider.
+- **Sudah ditetapkan:** Next.js frontend; Node.js backend; PostgreSQL database Monitoring Kadis; WebSocket untuk dashboard; instalasi PostgreSQL langsung di Windows Server untuk tahap awal; polling API sumber yang tersedia; dua sumber dummy pada fase awal.
+- **Rekomendasi teknis, butuh approval:** TypeScript di frontend dan backend; Fastify atau NestJS untuk HTTP backend; Socket.IO **atau** native WebSocket (`ws`); query builder atau driver `pg`; Redis untuk scaling/queue apabila dibutuhkan; UI library (mis. Tailwind CSS + shadcn/ui); chart library; testing stack; orchestrator/deployment target; CI/CD provider.
 - **Belum diketahui:** identitas pengguna dan hierarki akses yang tepat; daftar KPI beserta definisi rumus; payload dan kontrak API aplikasi sumber; kebutuhan geografis; SLA/target latensi; volume dan retensi data; kapasitas/izin Oracle; deadline, anggaran, target infrastruktur, domain, dan standar keamanan organisasi.
 
 ### Pertanyaan terbuka yang **menghalangi persetujuan PRD**
@@ -93,7 +95,7 @@ Aplikasi operasional berjalan pada sistem terpisah sehingga pimpinan/Kadis memer
 - AC04: Respons sukses baru dikirim setelah event diterima secara durable sesuai desain yang disetujui; pemrosesan asinkron terobservasi.
 - AC05: Event menyimpan sumber, event ID, tipe, waktu kejadian, waktu diterima, versi skema, dan correlation ID.
 
-**F04. Oracle persistence & aggregation**
+**F04. PostgreSQL persistence & aggregation**
 - AC01: Migrasi skema dapat diulang pada environment baru dan mempunyai prosedur rollback yang jelas.
 - AC02: Raw metadata event yang diperlukan, status proses, snapshot, dan agregat disimpan sesuai aturan minimisasi data.
 - AC03: Penghitungan KPI tahan retry, out-of-order event, dan perubahan skema; hasil dapat direkonsiliasi.

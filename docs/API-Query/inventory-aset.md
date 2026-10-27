@@ -45,7 +45,7 @@ Observer `InventoryMonitoringObserver` menangani `created`, `deleted`, dan `rest
 
 Job mengirim `POST` ke URL HTTPS dalam `MONITORING_KADIS_INGEST_URL`, dengan event ID UUID yang tetap sama saat retry, `source=inventory_aset`, `type=inventory.assets.snapshot_updated`, `schema_version=1.0`, waktu UTC, dan payload yang hanya memuat total serta `as_of`. Header `X-Monitoring-Key-Id`, `X-Monitoring-Timestamp`, dan `X-Monitoring-Signature` memakai HMAC-SHA256 atas `timestamp + "." + raw JSON body`. Secret diambil dari konfigurasi saat job berjalan dan tidak ikut payload. Receiver nanti wajib memverifikasi signature secara aman, batas usia timestamp, hak source, schema, dan idempotency event ID.
 
-Job memiliki timeout HTTP 5 detik, maksimal 5 percobaan dengan backoff. Pengiriman **nonaktif secara default**. Worker database queue harus berjalan saat integrasi diaktifkan. Penerima Node.js belum tersedia, sehingga URL/key/secret belum boleh diisi dengan nilai produksi atau dinyatakan teruji.
+Job memiliki timeout HTTP 5 detik, maksimal 5 percobaan dengan backoff. Pengiriman **nonaktif secara default**. Worker database queue harus berjalan saat integrasi diaktifkan. Receiver Node.js Monitoring Kadis kini tersedia pada backend dev dan menyimpan event/snapshot ke PostgreSQL, tetapi belum dikonfigurasi atau diuji end-to-end; URL/key/secret produksi belum boleh diaktifkan.
 
 Contoh payload **SAMPLE, bukan data nyata**:
 
@@ -98,7 +98,7 @@ MONITORING_KADIS_SECRET=<secret tanda tangan>
 ## Hal yang belum selesai / risiko
 
 1. Pemilik bisnis perlu mengesahkan apakah `Total Aset` mencakup aset `retired/lost/disposed` seperti `Asset::count()` saat ini.
-2. Backend Monitoring Kadis belum memiliki endpoint penerima, penyimpanan Oracle, validasi HMAC, deduplikasi, atau WebSocket. Tidak ada klaim pembaruan TV telah berjalan.
+2. Backend Monitoring Kadis memiliki receiver HMAC dev, deduplikasi event, PostgreSQL store, dan WebSocket. Koneksi sumber/production belum diuji; tidak ada klaim pembaruan TV production telah berjalan.
 3. Pengiriman memakai observer pasca-commit lalu database queue; ada celah kecil bila proses berhenti setelah commit tetapi sebelum job tersimpan. Untuk jaminan lebih kuat, rancang transactional outbox atau rekonsiliasi berkala sebelum production.
 4. Import aset massal dapat membuat banyak job snapshot. Perlu penggabungan/batching bila volumenya tinggi.
 5. `/health` existing memuat informasi lingkungan/DB; aksesnya perlu dibatasi jaringan dan tidak ditampilkan mentah pada TV publik.

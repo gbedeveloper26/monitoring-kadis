@@ -53,7 +53,8 @@ async function fetchJson(url, token, fetchImpl) {
   return JSON.parse(body);
 }
 
-export function createMonitor(config, { fetchImpl = fetch, now = () => Date.now() } = {}) {
+export function createMonitor(config, { fetchImpl = fetch, now = () => Date.now(), initialSnapshots = [], onSnapshot = () => {} } = {}) {
+  const persisted = new Map(initialSnapshots.map((snapshot) => [snapshot.source, snapshot]));
   const state = new Map(config.sources.map((source) => [source.id, {
     source: source.id,
     label: source.label,
@@ -68,6 +69,7 @@ export function createMonitor(config, { fetchImpl = fetch, now = () => Date.now(
     checkedAt: null,
     lastSuccessAt: null,
     consecutiveHealthFailures: 0,
+    ...(persisted.get(source.id) || {}),
   }]));
   let polling = false;
   let timer = null;
@@ -130,9 +132,24 @@ export function createMonitor(config, { fetchImpl = fetch, now = () => Date.now(
           || Date.parse(body.data.as_of) > now() + 5 * 60_000) {
         throw new Error('Invalid source payload');
       }
+      if (card.asOf && Date.parse(body.data.as_of) < Date.parse(card.asOf)) {
+        card.connection = 'connected';
+        card.message = null;
+        card.serviceStatus = await checkHealth(source, card);
+        return;
+      }
+      const asOf = body.data.as_of;
+      const lastSuccessAt = new Date(now()).toISOString();
+      const persisted = await onSnapshot({ source: source.id, metric: source.metric, value, asOf, receivedAt: lastSuccessAt, lastSuccessAt, checkedAt: card.checkedAt, connection: 'connected', mode: 'REAL' });
+      if (persisted === false) {
+        card.connection = 'connected';
+        card.message = null;
+        card.serviceStatus = await checkHealth(source, card);
+        return;
+      }
       card.value = value;
-      card.asOf = body.data.as_of;
-      card.lastSuccessAt = new Date(now()).toISOString();
+      card.asOf = asOf;
+      card.lastSuccessAt = lastSuccessAt;
       card.connection = 'connected';
       card.message = null;
     } catch {
@@ -165,5 +182,21 @@ export function createMonitor(config, { fetchImpl = fetch, now = () => Date.now(
     timer = null;
   }
 
-  return { snapshot, pollAll, start, stop, subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); } };
+  function applyWebhookSnapshot(event, { persist = true } = {}) {
+    const source = config.sources.find((candidate) => candidate.id === event.source);
+    if (!source) return false;
+    const card = state.get(source.id);
+    const value = event.payload?.[source.field];
+    card.value = value;
+    card.asOf = event.payload.as_of;
+    card.lastSuccessAt = new Date(now()).toISOString();
+    card.checkedAt = card.lastSuccessAt;
+    card.connection = 'connected';
+    card.message = null;
+    if (persist) onSnapshot({ source: source.id, metric: source.metric, value, asOf: card.asOf, receivedAt: card.lastSuccessAt, lastSuccessAt: card.lastSuccessAt, checkedAt: card.checkedAt, connection: 'connected', mode: event.mode });
+    publish();
+    return true;
+  }
+
+  return { snapshot, pollAll, start, stop, applyWebhookSnapshot, subscribe(listener) { listeners.add(listener); return () => listeners.delete(listener); } };
 }
